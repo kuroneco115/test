@@ -1,148 +1,338 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#080b10">
-<title>test</title>
+<title>test — SCHOOL LIMINAL</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b10;color:#e9edf0;font-family:system-ui,"Noto Sans JP",sans-serif;touch-action:none}
-#app{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:8px}
-header,#hud{width:min(1000px,100%);display:flex;justify-content:space-between;gap:8px;align-items:center}
-header{color:#9eabb7;font-size:12px}header b{font-size:21px;letter-spacing:.28em;color:#f3f5f6}
-#frame{position:relative;width:min(1000px,100%);aspect-ratio:16/10;max-height:72vh;background:#111922;border:1px solid #34414b;border-radius:8px;overflow:hidden;box-shadow:0 18px 70px #000b}
-canvas{display:block;width:100%;height:100%}
-#hud{font-size:12px;color:#c1ccd5}#hint{font-size:11px;color:#7f8b96;text-align:center}
-#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:#05090ddd}
-.panel{max-width:560px}.panel h1{font-size:clamp(38px,8vw,62px);letter-spacing:.28em;margin:0 0 10px}.panel p{font-size:13px;line-height:1.85;color:#c1cbd3}
-button{background:#dce5e9;color:#101820;border:1px solid #aebcc5;border-radius:6px;padding:12px 24px;font-weight:800}
-#mobile{display:none;position:absolute;inset:auto 10px 10px;justify-content:space-between;align-items:end;pointer-events:none}
-.pad{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px;pointer-events:auto}
-.pad button,.actions button{padding:0;width:42px;height:42px;background:#17232bdc;color:white;border-color:#aab8c477;font-size:17px}
-.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
-.actions{display:flex;gap:5px;pointer-events:auto}.actions button{width:58px;height:50px;font-size:11px}
-@media(pointer:coarse){#mobile{display:flex}#hint{display:none}#frame{max-height:68vh}}
+:root{color-scheme:dark;--ink:#e7eceb;--muted:#8c9a9d;--line:#3b4a4e;--panel:#10191ddd;--mint:#a6d4c8}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070a0e;color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;touch-action:none}
+body{display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#172129 0,#080b10 70%)}
+#app{width:min(1180px,100vw);height:min(820px,100dvh);display:flex;flex-direction:column;padding:8px;gap:7px}
+header{display:flex;align-items:center;justify-content:space-between;min-height:28px;padding:0 3px;color:var(--muted);font-size:11px;letter-spacing:.12em}
+.brand{font-size:20px;font-weight:900;letter-spacing:.3em;color:#f0f4f1}
+#screen{position:relative;flex:1;min-height:0;border:1px solid #405055;border-radius:9px;overflow:hidden;background:#0b1217;box-shadow:0 18px 70px #000c}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+#hud{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:#c3d0cf;font-size:11px;min-height:22px}
+.hudgroup{display:flex;gap:12px;align-items:center}.meter{letter-spacing:2px;color:#b5d8cc}
+#hint{text-align:center;color:#78878b;font-size:10px;min-height:14px}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#05090deF,#0a1117ed);padding:18px;overflow:auto}
+.panel{width:min(650px,100%);max-height:100%;overflow:auto;padding:clamp(16px,4vw,32px);border:1px solid #526267;background:#0b1218ee;box-shadow:0 15px 60px #000b;text-align:center}
+.panel h1{font-size:clamp(38px,9vw,68px);letter-spacing:.32em;margin:0 0 2px;color:#f1f5f2;text-shadow:0 0 24px #9ecdb555}
+.kicker{font-size:10px;letter-spacing:.3em;color:#8ea7a5}
+.panel p{font-size:13px;line-height:1.9;color:#b8c5c4}
+.panel .sub{font-size:11px;color:#839397}
+.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:17px}
+button{font:inherit;cursor:pointer;border:1px solid #8da6a5;background:#dce9e4;color:#101a1b;border-radius:4px;padding:11px 20px;font-weight:800}
+button.secondary{background:#142127;color:#d7e1de;border-color:#536568}
+button:active{transform:translateY(1px)}
+.menugrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0;text-align:left}
+.menuitem{border:1px solid #34464a;background:#101b20;padding:10px;font-size:11px;color:#b7c7c5}
+.menuitem b{display:block;color:#e2ebe7;margin-bottom:4px}
+#touch{display:none;position:absolute;inset:auto 10px 10px;align-items:end;justify-content:space-between;pointer-events:none}
+.dpad{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px;pointer-events:auto}
+.dpad button,.touchactions button{padding:0;width:42px;height:42px;background:#111e25dc;color:#f1f5f2;border:1px solid #91aaa877;border-radius:7px}
+.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}
+.touchactions{display:grid;grid-template-columns:repeat(2,54px);gap:4px;pointer-events:auto}
+.touchactions button{width:54px;height:43px;font-size:10px}
+#toast{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:8px 14px;background:#0b1518df;border:1px solid #627b78;color:#e4eeea;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap}
+@media(pointer:coarse){#touch{display:flex}#hint{display:none}#app{padding:5px;gap:5px}#hud{font-size:10px}}
+@media(max-width:520px){.brand{font-size:16px}.menugrid{grid-template-columns:1fr 1fr}.panel p{font-size:12px}}
 </style>
 </head>
 <body>
 <div id="app">
-<header><b>test</b><span>FIELD 01 — ABNORMAL SCHOOL</span></header>
-<div id="frame">
-<canvas id="game" width="960" height="600"></canvas>
-<div id="overlay"><div class="panel"><h1>test</h1><p>夜の高校。校内放送が途切れた瞬間、見慣れた校舎は出口のない迷宮へ変わった。<br>各階に隠された記録を集め、校舎から脱出しよう。</p><p>PC：WASD / 矢印キーで移動・SHIFTで走る・Eで調べる<br>スマホ：画面のパッド・調べるボタン</p><button id="start">ゲーム開始</button></div></div>
-<div id="mobile"><div class="pad">
-<button class="up" data-key="ArrowUp">▲</button><button class="left" data-key="ArrowLeft">◀</button><button class="down" data-key="ArrowDown">▼</button><button class="right" data-key="ArrowRight">▶</button>
-</div><div class="actions"><button id="run">走る</button><button id="act">調べる</button></div></div>
+<header><span class="brand">test</span><span>SCHOOL LIMINAL / BUILD 03</span><span id="clock">00:00</span></header>
+<div id="screen">
+<canvas id="game" width="960" height="640" aria-label="test game screen"></canvas>
+<div id="toast"></div>
+<div id="overlay">
+ <div class="panel">
+  <div class="kicker">AN ABANDONED SCHOOL NIGHTMARE</div>
+  <h1>test</h1>
+  <p>午前零時。誰もいないはずの高校から、チャイムが鳴った。<br>廊下は伸び、教室は昨日と違う場所につながっている。<br>校内に残された記録を集め、最後の出口を見つけよう。</p>
+  <div class="menugrid">
+   <div class="menuitem"><b>探索</b>4つの階層・教室・図書室・旧校舎</div>
+   <div class="menuitem"><b>生存</b>音に反応する「ノイズ」から隠れる</div>
+   <div class="menuitem"><b>謎解き</b>記録・鍵・電源装置を探す</div>
+   <div class="menuitem"><b>操作</b>PC / スマートフォン両対応</div>
+  </div>
+  <p class="sub">PC：WASD / 矢印 移動・SHIFT 走る・E 調べる・F ライト・M マップ・ESC 一時停止<br>スマホ：画面の方向キーとアクションボタン</p>
+  <div class="actions"><button id="newgame">NEW GAME</button><button class="secondary" id="continue" style="display:none">CONTINUE</button></div>
+  <p class="sub">音声はゲーム開始後に有効になります。音量は端末側で調整できます。</p>
+ </div>
 </div>
-<div id="hud"><span id="objective">記録 0 / 4</span><span id="floor">1F 校舎</span><span id="state">探索中</span><span id="stamina">体力 ■■■</span></div>
-<div id="hint">WASD / 矢印キー：移動　SHIFT：走る　E：調べる・階段を使う</div>
+<div id="touch">
+ <div class="dpad"><button class="up" data-key="ArrowUp">▲</button><button class="left" data-key="ArrowLeft">◀</button><button class="down" data-key="ArrowDown">▼</button><button class="right" data-key="ArrowRight">▶</button></div>
+ <div class="touchactions"><button id="t-run">走る</button><button id="t-act">調べる</button><button id="t-light">ライト</button><button id="t-map">マップ</button></div>
+</div>
+</div>
+<div id="hud">
+ <div class="hudgroup"><span id="floor">1F / 普通教室棟</span><span id="objective">記録 0/4</span></div>
+ <div class="hudgroup"><span id="battery">ライト ■■■</span><span id="stamina" class="meter">体力 ■■■</span><span id="status">探索中</span></div>
+</div>
+<div id="hint">WASD / 矢印：移動　SHIFT：走る　E：調べる　F：ライト　M：マップ　ESC：一時停止</div>
 </div>
 <script>
 (()=>{
-const cv=document.getElementById('game'),c=cv.getContext('2d');
-const TILE=48,MAP=[
-"####################",
-"#....#.............#",
-"#....#..####..###..#",
-"#....#..#..#..#.....#",
-"#.......#..#..#..##.#",
-"###.#####..#..#..#..#",
-"#...#......#.....#..#",
-"#...#.######.#####..#",
-"#......#...........##",
-"#.####.#.#######.#..#",
-"#....#.#.....#...#..#",
-"###..#.#####.#.###..#",
-"#....#.......#......#",
-"#.##########.#####..#",
-"#..................E#",
-"####################"
-];
+'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=960,H=640,TS=32,MW=30,MH=20;
+const $=id=>document.getElementById(id);
+const input={};
+let mode='menu',floor=0,player=null,enemy=null,items=[],props=[],doors=[],notes=[],keys=[],fuses=[],collected={notes:[],keys:[],fuses:[]};
+let stamina=100,battery=100,noise=0,lightOn=true,mapOn=false,elapsed=0,toastTimer=0,toastText='',last=0,ambience=null,saveAvailable=false,exitUnlocked=false,alarm=0;
 const floors=[
-{name:'1F 校舎',start:[2.5,2.5],exit:[18.5,14.5],stairs:[16.5,2.5],note:[8.5,3.5],key:[4.5,12.5]},
-{name:'2F 特別教室',start:[16.5,2.5],exit:[2.5,2.5],stairs:[3.5,13.5],note:[15.5,8.5],key:[5.5,3.5]},
-{name:'3F 図書室',start:[3.5,13.5],exit:[18.5,14.5],stairs:[17.5,3.5],note:[9.5,10.5],key:[15.5,12.5]},
-{name:'地下・旧校舎',start:[17.5,3.5],exit:[2.5,2.5],stairs:[2.5,13.5],note:[5.5,8.5],key:[14.5,6.5]}
+ {name:'1F / 普通教室棟',theme:'class',start:[3,3],exit:[27,17],stairs:[14,10],note:[7,4],key:[23,4],fuse:[5,15],enemy:[24,14],seed:1},
+ {name:'2F / 特別教室棟',theme:'special',start:[14,10],exit:[3,3],stairs:[14,10],note:[22,4],key:[5,15],fuse:[24,15],enemy:[5,5],seed:2},
+ {name:'3F / 図書・音楽室',theme:'library',start:[14,10],exit:[27,17],stairs:[14,10],note:[5,15],key:[24,4],fuse:[23,15],enemy:[23,5],seed:3},
+ {name:'B1 / 旧校舎',theme:'basement',start:[14,10],exit:[3,3],stairs:[14,10],note:[24,15],key:[5,4],fuse:[7,15],enemy:[24,5],seed:4}
 ];
-let floor=0,player,monster,records=[],keyFound=[],stamina=100,noise=0,game='menu',near='';
-const down={},audio={ctx:null,osc:null};
-const cols=MAP[0].length,rows=MAP.length;
-function wall(x,y){let xx=Math.floor(x/TILE),yy=Math.floor(y/TILE);return yy<0||xx<0||yy>=rows||xx>=cols||MAP[yy][xx]==='#'}
-function move(o,dx,dy){let nx=o.x+dx,ny=o.y+dy;if(!wall(nx+Math.sign(dx)*o.r,o.y)&&!wall(nx,o.y+o.r*.65)&&!wall(nx,o.y-o.r*.65))o.x=nx;if(!wall(o.x,ny+Math.sign(dy)*o.r)&&!wall(o.x+o.r*.65,ny)&&!wall(o.x-o.r*.65,ny))o.y=ny}
-function initFloor(i){floor=i;let f=floors[i];player={x:f.start[0]*TILE,y:f.start[1]*TILE,r:10,face:0,step:0};monster={x:(i%2?4.5:17.5)*TILE,y:(i%2?11.5:12.5)*TILE,r:13,alert:0,phase:0};records[i]=records[i]||false;keyFound[i]=keyFound[i]||false;near='';hud()}
-function reset(){records=[false,false,false,false];keyFound=[false,false,false,false];stamina=100;noise=0;initFloor(0);game='play';document.getElementById('overlay').style.display='none';startAudio()}
-function hud(){document.getElementById('objective').textContent=`記録 ${records.filter(Boolean).length} / 4　鍵 ${keyFound.filter(Boolean).length}/4`;document.getElementById('floor').textContent=floors[floor].name;document.getElementById('stamina').textContent='体力 '+('■'.repeat(Math.ceil(stamina/34))||'□');document.getElementById('state').textContent=near||'探索中'}
-function startAudio(){try{if(!audio.ctx){audio.ctx=new(window.AudioContext||window.webkitAudioContext)();audio.osc=audio.ctx.createOscillator();let gain=audio.ctx.createGain();audio.osc.type='sine';audio.osc.frequency.value=48;gain.gain.value=.018;audio.osc.connect(gain);gain.connect(audio.ctx.destination);audio.osc.start()}audio.ctx.resume()}catch(e){}}
-function beep(freq=440,dur=.12){try{let o=audio.ctx.createOscillator(),g=audio.ctx.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.08,audio.ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.ctx.currentTime+dur);o.connect(g);g.connect(audio.ctx.destination);o.start();o.stop(audio.ctx.currentTime+dur)}catch(e){}}
-function interact(){if(game!=='play')return;let f=floors[floor],d=(p)=>Math.hypot(player.x-p[0]*TILE,player.y-p[1]*TILE);
- if(!records[floor]&&d(f.note)<45){records[floor]=true;beep(660);showToast('記録片を回収した');}
- else if(!keyFound[floor]&&d(f.key)<45){keyFound[floor]=true;beep(520);showToast('古い鍵を見つけた');}
- else if(d(f.stairs)<54){if(floor<3){initFloor(floor+1);beep(330);showToast('階層が変わった');}else showToast('階段は崩れていて通れない');}
- else if(d(f.exit)<54){if(records.every(Boolean)&&keyFound.every(Boolean)){game='clear';end('脱出成功','4つの記録と鍵を集め、校舎から脱出した。')}else showToast('出口は施錠されている。各階の記録と鍵が必要だ。');}
- else showToast('周囲には古い机とロッカーが並んでいる。');
- hud()}
-let toast='',toastTime=0;function showToast(s){toast=s;toastTime=2.3;hud()}
-function end(title,msg){let o=document.getElementById('overlay');o.style.display='flex';o.innerHTML=`<div class="panel"><h1 style="letter-spacing:.12em">${title}</h1><p>${msg}</p><button id="again">もう一度</button></div>`;document.getElementById('again').onclick=()=>{o.innerHTML='<div class="panel"><h1>test</h1><p>校舎に戻る。4つの記録と鍵を探そう。</p><button id="start2">ゲーム開始</button></div>';document.getElementById('start2').onclick=reset;};}
-function update(dt){
- if(game!=='play')return;
- let dx=0,dy=0;if(down.ArrowLeft||down.a)dx--;if(down.ArrowRight||down.d)dx++;if(down.ArrowUp||down.w)dy--;if(down.ArrowDown||down.s)dy++;
- let moving=!!(dx||dy),l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
- let run=(down.Shift||down.run)&&stamina>0&&moving,speed=run?220:145;
- if(run){stamina=Math.max(0,stamina-30*dt);noise=Math.min(1,noise+dt*1.1)}else{stamina=Math.min(100,stamina+18*dt);noise=Math.max(0,noise-dt*.55)}
- if(moving){player.face=Math.atan2(dy,dx);player.step+=dt*(run?13:8);move(player,dx*speed*dt,dy*speed*dt)}
- let dist=Math.hypot(monster.x-player.x,monster.y-player.y);monster.alert=Math.max(noise,dist<250?1-dist/250:0);
- if(monster.alert>.06){let vx=player.x-monster.x,vy=player.y-monster.y,ll=Math.hypot(vx,vy)||1;move(monster,vx/ll*(68+monster.alert*38)*dt,vy/ll*(68+monster.alert*38)*dt)}
- else{monster.phase+=dt;let tx=(floor%2?4.5:17.5)*TILE+Math.cos(monster.phase*.4)*80,ty=11.5*TILE+Math.sin(monster.phase*.5)*65,vx=tx-monster.x,vy=ty-monster.y,ll=Math.hypot(vx,vy)||1;move(monster,vx/ll*28*dt,vy/ll*28*dt)}
- if(dist<player.r+monster.r+3){game='caught';end('発見された','背後から足音が迫り、校舎の闇に飲み込まれた。');}
- let f=floors[floor],dNote=Math.hypot(player.x-f.note[0]*TILE,player.y-f.note[1]*TILE),dKey=Math.hypot(player.x-f.key[0]*TILE,player.y-f.key[1]*TILE),dSt=Math.hypot(player.x-f.stairs[0]*TILE,player.y-f.stairs[1]*TILE),dEx=Math.hypot(player.x-f.exit[0]*TILE,player.y-f.exit[1]*TILE);
- near=dNote<45&&!records[floor]?'E：記録片を調べる':dKey<45&&!keyFound[floor]?'E：鍵を拾う':dSt<54?'E：階段を使う':dEx<54?'E：出口を調べる':'';
- if(toastTime>0)toastTime-=dt;hud();
+let map=[];
+function makeMap(seed){
+ let a=Array.from({length:MH},()=>Array(MW).fill(1));
+ const carve=(x1,y1,x2,y2)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)a[y][x]=0};
+ // perimeter and four broad rooms connected by a cross-shaped corridor
+ carve(1,1,28,18);
+ // partitions form four wings
+ for(let y=1;y<19;y++)if(y!==9&&y!==10){a[y][14]=1}
+ for(let x=1;x<29;x++)if(x!==14&&x!==15){a[9][x]=0;a[10][x]=0}
+ // wing walls with door gaps
+ for(let x=1;x<14;x++)if(x!==6&&x!==7&&x!==10){a[8][x]=1;a[11][x]=1}
+ for(let x=15;x<29;x++)if(x!==20&&x!==21&&x!==25){a[8][x]=1;a[11][x]=1}
+ for(let y=1;y<9;y++)if(y!==4&&y!==5){a[y][12]=1;a[y][17]=1}
+ for(let y=11;y<19;y++)if(y!==14&&y!==15){a[y][12]=1;a[y][17]=1}
+ // carve connecting doorways / corridor
+ [[6,8],[7,8],[10,11],[20,8],[21,8],[25,11],[12,4],[17,5],[12,14],[17,15]].forEach(([x,y])=>a[y][x]=0);
+ // additional little recesses and classroom alcoves
+ for(let y=2;y<7;y++)for(let x=3;x<10;x++)if((x+y+seed)%9===0)a[y][x]=0;
+ return a;
 }
-function drawPixelPerson(x,y,step,face,isMonster=false){
- c.save();c.translate(Math.round(x),Math.round(y));
- if(isMonster){
-  let sway=Math.sin(step*5)*2;c.fillStyle='#090b10';c.fillRect(-8,-13+sway,16,26);c.fillRect(-12,-7+sway,5,17);c.fillRect(7,-5-sway,5,18);c.fillRect(-7,11,5,13);c.fillRect(3,11,5,13);c.fillStyle='#d8e5df';c.fillRect(-5,-5,3,2);c.fillRect(3,-5,3,2);c.fillStyle='#29343a';c.fillRect(-5,-16,10,4);
- }else{
-  // オリジナルの学生キャラクター：黒髪、青緑の制服、赤いバッグ
-  let bob=Math.sin(step)*1.5,leg=Math.sin(step*2)*2;
-  c.fillStyle='#111820';c.fillRect(-7,-16+bob,14,7);c.fillRect(-9,-12+bob,3,5);c.fillRect(6,-12+bob,3,5);
-  c.fillStyle='#e4b99b';c.fillRect(-5,-10+bob,10,9);c.fillStyle='#151b24';c.fillRect(-6,-13+bob,12,4);c.fillRect(-7,-9+bob,3,4);
-  c.fillStyle='#d6e0df';c.fillRect(-7,-2+bob,14,9);c.fillStyle='#315a62';c.fillRect(-7,0+bob,14,7);c.fillStyle='#a9c3c1';c.fillRect(-2,-1+bob,4,5);
-  c.fillStyle='#b54e4e';c.fillRect(6,-1+bob,4,8);c.fillStyle='#18212a';c.fillRect(-6,8+bob,5,5+leg);c.fillRect(1,8+bob,5,5-leg);
-  c.fillStyle='#d5dadd';c.fillRect(-7,12+bob+leg,6,2);c.fillRect(1,12+bob-leg,6,2);
+function tileBlocked(x,y){
+ let tx=Math.floor(x/TS),ty=Math.floor(y/TS);
+ if(tx<0||ty<0||tx>=MW||ty>=MH||map[ty][tx]===1)return true;
+ for(const d of doors)if(!d.open&&Math.abs(tx-d.x)<1&&Math.abs(ty-d.y)<1)return true;
+ return false;
+}
+function moveBody(o,dx,dy){
+ const r=o.r||8, nx=o.x+dx,ny=o.y+dy;
+ if(!tileBlocked(nx+Math.sign(dx)*r,o.y)&&!tileBlocked(nx,o.y+r*.65)&&!tileBlocked(nx,o.y-r*.65))o.x=nx;
+ if(!tileBlocked(o.x,ny+Math.sign(dy)*r)&&!tileBlocked(o.x+r*.65,ny)&&!tileBlocked(o.x-r*.65,ny))o.y=ny;
+}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function pos(p){return{x:(p[0]+.5)*TS,y:(p[1]+.5)*TS}}
+function floorInit(n,fromStair=false){
+ floor=n;map=makeMap(n+1);let f=floors[n],p=pos(fromStair?f.stairs:f.start);
+ player={x:p.x,y:p.y,r:7,dir:0,walk:0,hide:false,flash:0};
+ const ep=pos(f.enemy);enemy={x:ep.x,y:ep.y,r:8,alert:0,phase:0,mode:'wander',target:null,stun:0,step:0};
+ const points=[['note',f.note],['key',f.key],['fuse',f.fuse]];
+ items=points.map(([type,p])=>({type,x:(p[0]+.5)*TS,y:(p[1]+.5)*TS,got:collected[type].includes(n)}));
+ props=[];doors=[];
+ // furniture arrangements vary by floor; all collision props are visual only to keep movement forgiving
+ for(let y=2;y<18;y++)for(let x=2;x<28;x++){
+  if(map[y][x]===0&&((x*13+y*7+n*11)%31===0))props.push({x,y,type:(x+y+n)%3});
  }
- c.restore();
+ // locked side door, can be opened with key for a small supply cache
+ doors.push({x:n%2?8:21,y:n%2?5:14,open:false,locked:true});
+ alarm=0;near='';hud();
+}
+let near='',toastQueue=[];
+function say(s){toastText=s;toastTimer=2.4;$('toast').textContent=s;$('toast').style.opacity=1}
+function hud(){
+ $('floor').textContent=floors[floor].name;
+ $('objective').textContent=`記録 ${collected.notes.length}/4　鍵 ${collected.keys.length}/4　電源 ${collected.fuses.length}/4`;
+ $('stamina').textContent='体力 '+('■'.repeat(Math.ceil(stamina/34))||'□');
+ $('battery').textContent='ライト '+('■'.repeat(Math.ceil(battery/34))||'□');
+ $('status').textContent=near|| (enemy&&enemy.alert>.65?'何かが近い':'探索中');
+}
+function audioStart(){
+ try{
+  if(!ambience){
+   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+   const ac=new AC(),osc=ac.createOscillator(),gain=ac.createGain(),filter=ac.createBiquadFilter();
+   osc.type='sawtooth';osc.frequency.value=43;filter.type='lowpass';filter.frequency.value=95;gain.gain.value=.012;
+   osc.connect(filter);filter.connect(gain);gain.connect(ac.destination);osc.start();ambience={ac,osc,gain};
+  } ambience.ac.resume();
+ }catch(e){}
+}
+function tone(freq=440,duration=.12,vol=.06){
+ try{if(!ambience)return;let ac=ambience.ac,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=freq;g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+duration);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+duration)}catch(e){}
+}
+function save(){try{localStorage.setItem('test_school_save',JSON.stringify({floor,player:{x:player.x,y:player.y},collected,stamina,battery,elapsed}))}catch(e){}}
+function loadSave(){try{let s=JSON.parse(localStorage.getItem('test_school_save')||'null');if(!s)return false;collected=s.collected||collected;stamina=s.stamina??100;battery=s.battery??100;elapsed=s.elapsed||0;floorInit(s.floor||0);if(s.player){player.x=s.player.x;player.y=s.player.y}return true}catch(e){return false}}
+function showMenu(title='test',message='午前零時。誰もいないはずの高校から、チャイムが鳴った。'){
+ mode='menu';$('overlay').style.display='flex';
+ $('overlay').innerHTML=`<div class="panel"><div class="kicker">AN ABANDONED SCHOOL NIGHTMARE</div><h1>${title}</h1><p>${message}</p><div class="menugrid"><div class="menuitem"><b>探索</b>4階層・教室・図書室・旧校舎</div><div class="menuitem"><b>生存</b>音に反応する怪異「ノイズ」</div><div class="menuitem"><b>謎解き</b>記録・鍵・電源部品を回収</div><div class="menuitem"><b>隠れる</b>ロッカーや物陰で気配を消す</div></div><p class="sub">PC：WASD / 矢印・SHIFT・E・F・M・ESC<br>スマホ：画面のボタン</p><div class="actions"><button id="ng">NEW GAME</button><button class="secondary" id="cont" ${saveAvailable?'':'style="display:none"'}>CONTINUE</button></div><p class="sub">ゲーム内の進行はこの端末のブラウザに保存されます。</p></div>`;
+ $('ng').onclick=()=>newGame();let b=$('cont');if(b)b.onclick=()=>{if(loadSave()){mode='play';$('overlay').style.display='none';audioStart();say('記録を読み込んだ')}};
+}
+function newGame(){collected={notes:[],keys:[],fuses:[]};stamina=100;battery=100;elapsed=0;floorInit(0);mode='play';$('overlay').style.display='none';audioStart();say('校内放送が途切れた。出口を探そう。');}
+function overlay(title,msg,button='もう一度'){mode='end';$('overlay').style.display='flex';$('overlay').innerHTML=`<div class="panel"><div class="kicker">SCHOOL LIMINAL</div><h1 style="letter-spacing:.12em">${title}</h1><p>${msg}</p><div class="actions"><button id="retry">${button}</button><button class="secondary" id="menu">タイトルへ</button></div></div>`;$('retry').onclick=()=>newGame();$('menu').onclick=()=>showMenu();}
+function interact(){
+ if(mode!=='play')return;
+ const f=floors[floor],dTo=p=>Math.hypot(player.x-(p[0]+.5)*TS,player.y-(p[1]+.5)*TS);
+ const item=items.find(i=>!i.got&&Math.hypot(player.x-i.x,player.y-i.y)<35);
+ if(item){
+  item.got=true;collected[item.type].push(floor);
+  if(item.type==='note'){say('記録片を入手：日誌のページがつながった');tone(620,.22)}
+  if(item.type==='key'){say('古い鍵を入手：鍵のかかった扉を開けられる');tone(520,.2)}
+  if(item.type==='fuse'){say('電源部品を入手：脱出装置に必要だ');tone(760,.25)}
+  hud();save();return;
+ }
+ if(dTo(f.stairs)<43){
+  let next=(floor+1)%4;floorInit(next,true);say(`${floors[next].name}へ移動した`);tone(300,.25);save();return;
+ }
+ if(dTo(f.exit)<45){
+  if(collected.notes.length===4&&collected.keys.length===4&&collected.fuses.length===4){overlay('脱出成功','4つの記録、鍵、電源部品を集め、校舎の外へ出た。けれど、背後でもう一度チャイムが鳴った。','最初から遊ぶ');localStorage.removeItem('test_school_save')}
+  else say('出口の装置は動かない。各階の記録・鍵・電源部品が必要だ。');
+  return;
+ }
+ const door=doors.find(d=>Math.hypot(player.x-(d.x+.5)*TS,player.y-(d.y+.5)*TS)<42);
+ if(door){if(collected.keys.includes(floor)){door.open=true;say('鍵が開いた。小さな保管室だ');tone(420,.2)}else say('鍵がかかっている。古い鍵が必要だ');return}
+ if(dist(player,enemy)<100){enemy.stun=1.5;noise=Math.max(0,noise-.5);say('息を殺した。ノイズが一瞬立ち止まった');return}
+ say('机の上に、古いチョークの粉が残っている。');
+}
+function update(dt){
+ if(mode!=='play')return;
+ elapsed+=dt;
+ let dx=0,dy=0;
+ if(input.ArrowLeft||input.a)dx--;if(input.ArrowRight||input.d)dx++;
+ if(input.ArrowUp||input.w)dy--;if(input.ArrowDown||input.s)dy++;
+ let moving=!!(dx||dy),len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;
+ const running=(input.Shift||input.run)&&moving&&stamina>0;
+ if(running){stamina=Math.max(0,stamina-29*dt);noise=Math.min(1,noise+dt*1.2)}else{stamina=Math.min(100,stamina+16*dt);noise=Math.max(0,noise-dt*.42)}
+ if(moving){player.dir=Math.atan2(dy,dx);player.walk+=dt*(running?15:9);moveBody(player,dx*(running?154:105)*dt,dy*(running?154:105)*dt)}
+ if(input.f){lightOn=!lightOn;input.f=false;say(lightOn?'ライトを点灯した':'ライトを消した')}
+ if(lightOn)battery=Math.max(0,battery-1.4*dt);if(battery<=0)lightOn=false;
+ if(input.m){mapOn=!mapOn;input.m=false}
+ let d=dist(player,enemy);
+ if(enemy.stun>0)enemy.stun-=dt;
+ else{
+  enemy.alert=Math.max(noise,d<205?Math.max(0,1-d/205):0,alarm);
+  if(enemy.alert>.08){
+   enemy.mode='hunt';let vx=player.x-enemy.x,vy=player.y-enemy.y,ll=Math.hypot(vx,vy)||1;
+   moveBody(enemy,vx/ll*(58+enemy.alert*55)*dt,vy/ll*(58+enemy.alert*55)*dt);
+  }else{
+   enemy.mode='wander';enemy.phase+=dt;let home=pos(floors[floor].enemy);
+   let tx=home.x+Math.cos(enemy.phase*.48)*90,ty=home.y+Math.sin(enemy.phase*.37)*75,vx=tx-enemy.x,vy=ty-enemy.y,ll=Math.hypot(vx,vy)||1;
+   moveBody(enemy,vx/ll*27*dt,vy/ll*27*dt);
+  }
+ }
+ if(d<player.r+enemy.r+3){overlay('見つかった','ノイズに気づかれた。走り続けると音で居場所を知られてしまう。');return}
+ const f=floors[floor],targets=[['記録',f.note,'notes'],['鍵',f.key,'keys'],['電源部品',f.fuse,'fuses']];
+ near='';
+ for(const [label,p,type] of targets)if(!collected[type].includes(floor)&&dToPoint(p)<43)near=`E：${label}を拾う`;
+ if(dToPoint(f.stairs)<44)near='E：階段を使う';
+ if(dToPoint(f.exit)<46)near='E：出口を調べる';
+ if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity=0}
+ if(ambience){ambience.gain.gain.setTargetAtTime(.008+enemy.alert*.02,ambience.ac.currentTime,.5);ambience.osc.frequency.setTargetAtTime(38+enemy.alert*13,ambience.ac.currentTime,.5)}
+ hud();if(Math.floor(elapsed)%8===0&&Math.random()<dt*.12)save();
+}
+function dToPoint(p){return Math.hypot(player.x-(p[0]+.5)*TS,player.y-(p[1]+.5)*TS)}
+function pixelStudent(x,y,walk,dir){
+ ctx.save();ctx.translate(Math.round(x),Math.round(y));let bob=Math.round(Math.sin(walk)*1.2),leg=Math.round(Math.sin(walk*2)*2);
+ // shadow
+ ctx.fillStyle='#080d10aa';ctx.fillRect(-8,8,16,4);
+ // legs and shoes
+ ctx.fillStyle='#17212a';ctx.fillRect(-6,7+bob,5,6+leg);ctx.fillRect(1,7+bob,5,6-leg);
+ ctx.fillStyle='#d3d9d4';ctx.fillRect(-7,12+bob+leg,6,2);ctx.fillRect(1,12+bob-leg,6,2);
+ // red satchel
+ ctx.fillStyle='#9b4948';ctx.fillRect(6,-1+bob,5,9);
+ // jacket / uniform
+ ctx.fillStyle='#d8e0dc';ctx.fillRect(-7,-3+bob,14,12);ctx.fillStyle='#315d65';ctx.fillRect(-7,-1+bob,14,9);
+ ctx.fillStyle='#b7d0c9';ctx.fillRect(-2,-2+bob,4,6);ctx.fillStyle='#d6c69c';ctx.fillRect(-1,1+bob,2,2);
+ // neck, face, hair
+ ctx.fillStyle='#c99578';ctx.fillRect(-3,-9+bob,6,7);
+ ctx.fillStyle='#d5a184';ctx.fillRect(-5,-12+bob,10,10);
+ ctx.fillStyle='#111820';ctx.fillRect(-6,-14+bob,12,5);ctx.fillRect(-7,-11+bob,3,5);ctx.fillRect(4,-11+bob,3,4);ctx.fillRect(-4,-7+bob,2,3);
+ // face pixel and hair highlight
+ ctx.fillStyle='#1a252a';ctx.fillRect(2,-8+bob,2,2);ctx.fillStyle='#566c6a';ctx.fillRect(-3,-13+bob,4,1);
+ ctx.restore();
+}
+function pixelNoise(x,y,t,alert){
+ ctx.save();ctx.translate(Math.round(x),Math.round(y));let pulse=Math.sin(t*5)*2;
+ ctx.fillStyle='#05080c';ctx.fillRect(-7,-13+pulse,14,25);ctx.fillRect(-12,-7,5,15);ctx.fillRect(7,-5,5,17);
+ ctx.fillRect(-8,10,5,13);ctx.fillRect(3,10,5,13);
+ ctx.fillStyle='#93c5b8';ctx.fillRect(-5,-5,3,2);ctx.fillRect(3,-5,3,2);
+ ctx.fillStyle='#263b3b';ctx.fillRect(-4,-16,8,4);
+ if(alert>.5){ctx.fillStyle='#9ecdc0';ctx.fillRect(-10,-18,3,2);ctx.fillRect(7,-20,3,2)}
+ ctx.restore();
 }
 function draw(){
- c.fillStyle='#101820';c.fillRect(0,0,960,600);
- let camX=Math.max(0,Math.min(cols*TILE-960,player.x-480)),camY=Math.max(0,Math.min(rows*TILE-600,player.y-300));
- c.save();c.translate(-camX,-camY);
- for(let r=0;r<rows;r++)for(let x=0;x<cols;x++){let px=x*TILE,py=r*TILE;
- if(MAP[r][x]==='#'){c.fillStyle='#26333a';c.fillRect(px,py,TILE,TILE);c.fillStyle='#3b4749';c.fillRect(px+2,py+2,TILE-4,5);c.fillStyle='#1a242b';c.fillRect(px+4,py+10,TILE-8,TILE-14)}
- else{c.fillStyle=(r+x)%2?'#555e57':'#62695f';c.fillRect(px,py,TILE,TILE);c.strokeStyle='#70766d';c.strokeRect(px,py,TILE,TILE);
-  if((r+x*2)%9===0){c.fillStyle='#3c4b4d';c.fillRect(px+8,py+8,5,30);c.fillStyle='#9b9b83';c.fillRect(px+10,py+12,2,2)}
-  if((r*5+x)%17===0){c.fillStyle='#39464a';c.fillRect(px+12,py+7,24,8);c.fillRect(px+14,py+15,20,3)}
- }}
- // 教室の机・ロッカー風のドット装飾
- for(let r=1;r<rows-1;r++)for(let x=1;x<cols-1;x++)if(MAP[r][x]==='.'&&(r*11+x*7)%23===0){c.fillStyle='#34434a';c.fillRect(x*TILE+13,r*TILE+15,22,13);c.fillStyle='#7d887f';c.fillRect(x*TILE+15,r*TILE+17,18,2)}
- let f=floors[floor];
- function item(pos,color,label){c.fillStyle=color;c.fillRect(pos[0]*TILE-8,pos[1]*TILE-8,16,16);c.fillStyle='#e8eee8';c.font='9px sans-serif';c.fillText(label,pos[0]*TILE-9,pos[1]*TILE-14)}
- if(!records[floor])item(f.note,'#b9e4dc','LOG');if(!keyFound[floor])item(f.key,'#d4b56c','KEY');item(f.stairs,'#647f91','STAIR');item(f.exit,'#72aa91','EXIT');
- drawPixelPerson(monster.x,monster.y,monster.phase,0,true);drawPixelPerson(player.x,player.y,player.step,player.face);
- c.restore();
- // flashlight / darkness
- c.fillStyle='rgba(1,4,9,.88)';c.fillRect(0,0,960,600);let px=player.x-camX,py=player.y-camY;
- c.globalCompositeOperation='destination-out';let g=c.createRadialGradient(px,py,24,px,py,240);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.7,'rgba(0,0,0,.72)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(px,py,240,0,Math.PI*2);c.fill();c.globalCompositeOperation='source-over';
- let vg=c.createRadialGradient(480,300,100,480,300,560);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(0,0,0,.55)');c.fillStyle=vg;c.fillRect(0,0,960,600);
- if(monster.alert>.3){for(let i=0;i<28;i++){c.fillStyle=`rgba(210,230,225,${monster.alert*.07})`;c.fillRect(Math.random()*960,Math.random()*600,Math.random()*30+3,1)}}
- if(toastTime>0){c.fillStyle='#e4eee9';c.font='16px sans-serif';c.textAlign='center';c.fillText(toast,480,50);c.textAlign='left'}
+ ctx.fillStyle='#10191d';ctx.fillRect(0,0,W,H);
+ let camX=Math.max(0,Math.min(MW*TS-W,player.x-W/2)),camY=Math.max(0,Math.min(MH*TS-H,player.y-H/2));
+ ctx.save();ctx.translate(-camX,-camY);
+ const theme=floors[floor].theme;
+ for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+  let px=x*TS,py=y*TS;
+  if(map[y][x]===1){ctx.fillStyle=theme==='basement'?'#202b2d':'#29363a';ctx.fillRect(px,py,TS,TS);ctx.fillStyle='#3d4c4c';ctx.fillRect(px+1,py+1,TS-2,4);ctx.fillStyle='#182226';ctx.fillRect(px+3,py+7,TS-6,TS-10);ctx.fillStyle='#56605a';ctx.fillRect(px+5,py+8,2,TS-14)}
+  else{
+   let base=theme==='basement'?((x+y)%2?'#414844':'#4a5048'):theme==='library'?((x+y)%2?'#555b50':'#606456'):theme==='special'?((x+y)%2?'#535d58':'#5e665d'):((x+y)%2?'#59615a':'#636a60');
+   ctx.fillStyle=base;ctx.fillRect(px,py,TS,TS);ctx.strokeStyle='#78807855';ctx.strokeRect(px,py,TS,TS);
+   if((x*7+y*11+floor*3)%29===0){ctx.fillStyle='#343f3d';ctx.fillRect(px+5,py+5,22,3);ctx.fillRect(px+5,py+8,3,18)}
+  }
+ }
+ // Room-specific pixel furniture
+ for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++)if(map[y][x]===0){
+  let seed=(x*17+y*31+floor*19)%47,px=x*TS,py=y*TS;
+  if(seed===2||seed===3){
+   if(theme==='library'){ctx.fillStyle='#3b3027';ctx.fillRect(px+3,py+5,26,21);ctx.fillStyle='#8b6848';for(let q=0;q<4;q++)ctx.fillRect(px+5+q*6,py+8,3,14)}
+   else if(theme==='basement'){ctx.fillStyle='#374347';ctx.fillRect(px+5,py+3,22,27);ctx.fillStyle='#9a9b83';ctx.fillRect(px+8,py+7,2,2);ctx.fillRect(px+20,py+7,2,2)}
+   else{ctx.fillStyle='#3c4a4c';ctx.fillRect(px+5,py+7,22,14);ctx.fillStyle='#9caa9f';ctx.fillRect(px+8,py+9,16,2);ctx.fillStyle='#242f34';ctx.fillRect(px+7,py+21,3,5);ctx.fillRect(px+22,py+21,3,5)}
+  }
+ }
+ // flickering ceiling lamps / light pools
+ for(let x=2;x<MW-2;x+=5){let y=(floor%2?3:16);if(map[y][x]===0){ctx.fillStyle=(Math.sin(elapsed*5+x)>-.4)?'#d2d8b51c':'#00000022';ctx.fillRect(x*TS,y*TS,TS*2,TS)}}
+ // doors, objects, exit, stairwell
+ for(const d of doors){ctx.fillStyle=d.open?'#283e3a':'#674b38';ctx.fillRect(d.x*TS+4,d.y*TS+3,TS-8,TS-6);ctx.fillStyle='#c4a66b';ctx.fillRect(d.x*TS+24,d.y*TS+15,3,3)}
+ const f=floors[floor];
+ function drawItem(p,color,label,spin=0){let x=(p[0]+.5)*TS,y=(p[1]+.5)*TS;cSave();ctx.translate(x,y);ctx.rotate(Math.sin(elapsed*2+spin)*.12);ctx.fillStyle=color;ctx.fillRect(-6,-6,12,12);ctx.fillStyle='#f2f1d9';ctx.fillRect(-2,-2,4,4);ctx.restore()}
+ function cSave(){ctx.save()}
+ if(!collected.notes.includes(floor))drawItem(f.note,'#a8d9ce','N');
+ if(!collected.keys.includes(floor))drawItem(f.key,'#d7b66c','K',1);
+ if(!collected.fuses.includes(floor))drawItem(f.fuse,'#d78d72','F',2);
+ // stair and exit markers
+ let sp=pos(f.stairs);ctx.fillStyle='#536d70';ctx.fillRect(sp.x-12,sp.y-12,24,24);ctx.fillStyle='#b6d2c8';ctx.font='9px monospace';ctx.fillText('UP',sp.x-7,sp.y+3);
+ let ep=pos(f.exit);ctx.fillStyle=collected.notes.length===4&&collected.keys.length===4&&collected.fuses.length===4?'#5f9d83':'#785d4c';ctx.fillRect(ep.x-11,ep.y-15,22,30);ctx.fillStyle='#d8e4d8';ctx.fillRect(ep.x-6,ep.y-10,12,19);ctx.fillStyle='#e9d7a4';ctx.fillRect(ep.x+4,ep.y,2,2);
+ // player and monster sprites
+ pixelNoise(enemy.x,enemy.y,enemy.phase,enemy.alert);pixelStudent(player.x,player.y,player.walk,player.dir);
+ // hideable lockers are drawn as dark niches
+ ctx.restore();
+ // darkness, flashlight cone/circle
+ ctx.fillStyle=`rgba(1,4,8,${lightOn&&battery>0?.84:.96})`;ctx.fillRect(0,0,W,H);
+ const px=player.x-camX,py=player.y-camY;
+ ctx.globalCompositeOperation='destination-out';
+ let radius=lightOn&&battery>0?235:88;
+ let grad=ctx.createRadialGradient(px,py,15,px,py,radius);grad.addColorStop(0,'rgba(0,0,0,1)');grad.addColorStop(.58,'rgba(0,0,0,.78)');grad.addColorStop(1,'rgba(0,0,0,0)');
+ ctx.fillStyle=grad;ctx.beginPath();ctx.arc(px,py,radius,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='source-over';
+ // vignette
+ let v=ctx.createRadialGradient(W/2,H/2,130,W/2,H/2,570);v.addColorStop(0,'transparent');v.addColorStop(1,'rgba(0,0,0,.58)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+ // static interference when monster hunts
+ if(enemy.alert>.25){for(let i=0;i<45;i++){ctx.fillStyle=`rgba(180,220,208,${enemy.alert*.055})`;ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*36+2,1)}}
+ if(mapOn)drawMap();
 }
-let last=0;function loop(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
-document.getElementById('start').onclick=reset;document.getElementById('act').onclick=interact;document.getElementById('run').onpointerdown=()=>down.run=true;document.getElementById('run').onpointerup=()=>down.run=false;document.getElementById('run').onpointercancel=()=>down.run=false;
-window.addEventListener('keydown',e=>{down[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key.toLowerCase()==='e')interact()});
-window.addEventListener('keyup',e=>down[e.key]=false);
-document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();down[k]=true;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>down[k]=false))});
-initFloor(0);game='menu';requestAnimationFrame(loop);
+function drawMap(){
+ const sx=20,sy=20,scale=7;ctx.fillStyle='#071014eF';ctx.fillRect(12,12,MW*scale+16,MH*scale+38);ctx.strokeStyle='#91aaa0';ctx.strokeRect(12,12,MW*scale+16,MH*scale+38);
+ ctx.fillStyle='#dbe7df';ctx.font='12px monospace';ctx.fillText('LOCAL MAP / '+floors[floor].name,20,27);
+ for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){ctx.fillStyle=map[y][x]?'#64706c':'#263a3a';ctx.fillRect(sx+x*scale,sy+25+y*scale,scale-1,scale-1)}
+ let f=floors[floor];ctx.fillStyle='#9de0c9';ctx.fillRect(sx+f.stairs[0]*scale,sy+25+f.stairs[1]*scale,5,5);ctx.fillStyle='#e6c17b';ctx.fillRect(sx+f.exit[0]*scale,sy+25+f.exit[1]*scale,5,5);
+ ctx.fillStyle='#f3f3e6';ctx.fillRect(sx+player.x/TS*scale-1,sy+25+player.y/TS*scale-1,4,4);
+}
+function loop(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;if(mode==='play')update(dt);draw();$('clock').textContent=new Date(elapsed*1000).toISOString().slice(14,19);requestAnimationFrame(loop)}
+$('newgame').onclick=newGame;
+window.addEventListener('keydown',e=>{
+ const k=e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k))e.preventDefault();
+ if(k==='Escape'){if(mode==='play'){mode='pause';$('overlay').style.display='flex';$('overlay').innerHTML='<div class="panel"><div class="kicker">PAUSED</div><h1>PAUSE</h1><p>探索を中断しています。</p><div class="actions"><button id="resume">戻る</button><button class="secondary" id="saveexit">保存してタイトルへ</button></div></div>';$('resume').onclick=()=>{$('overlay').style.display='none';mode='play'};$('saveexit').onclick=()=>{save();saveAvailable=true;showMenu()}}else if(mode==='pause'){mode='play';$('overlay').style.display='none'}return}
+ if(mode!=='play')return;
+ input[k]=true;if(k.toLowerCase()==='e')interact();if(k.toLowerCase()==='f')input.f=true;if(k.toLowerCase()==='m')input.m=true;
+});
+window.addEventListener('keyup',e=>input[e.key]=false);
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();input[k]=true;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>input[k]=false))});
+$('t-run').onpointerdown=()=>input.run=true;$('t-run').onpointerup=$('t-run').onpointercancel=()=>input.run=false;
+$('t-act').onclick=interact;$('t-light').onclick=()=>{if(mode==='play'){lightOn=!lightOn;say(lightOn?'ライトON':'ライトOFF')}};$('t-map').onclick=()=>mapOn=!mapOn;
+window.addEventListener('blur',()=>{for(const k in input)input[k]=false});
+try{saveAvailable=!!localStorage.getItem('test_school_save')}catch(e){}
+floorInit(0);showMenu();requestAnimationFrame(loop);
 })();
 </script>
 </body>
