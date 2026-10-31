@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#090d13">
+<title>test</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080c12;color:#e8edf2;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;touch-action:none}
+#wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}
+header{width:min(960px,100%);display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#aeb9c5}
+header strong{font-size:20px;letter-spacing:.22em;color:#f2f5f8}
+#gamebox{position:relative;width:min(960px,100%);aspect-ratio:16/10;max-height:72vh;background:#101923;border:1px solid #34414e;border-radius:8px;overflow:hidden;box-shadow:0 15px 60px #000b}
+canvas{width:100%;height:100%;display:block}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#05090ddd;padding:22px;text-align:center}
+.panel{max-width:520px}
+.panel h1{font-size:clamp(34px,8vw,58px);letter-spacing:.3em;margin:0 0 10px}
+.panel p{color:#bdc8d2;line-height:1.8;font-size:14px}
+button{border:1px solid #8795a4;background:#dce5ed;color:#101820;border-radius:6px;padding:12px 25px;font-weight:800;font-size:15px}
+#hud{width:min(960px,100%);display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#c0cad4}
+#hint{color:#8e9ba8;text-align:center}
+#mobile{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none}
+.pad{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px;pointer-events:auto}
+.pad button,.action button{padding:0;background:#18232dcc;color:#fff;border:1px solid #aab7c477;border-radius:8px;font-size:18px;width:42px;height:42px}
+.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
+.action{pointer-events:auto}.action button{width:68px;height:54px;font-size:12px}
+@media(pointer:coarse){#mobile{display:flex}#hint{display:none}#gamebox{max-height:68vh}}
+</style>
+</head>
+<body>
+<div id="wrap">
+<header><strong>test</strong><span>FIELD 01 / SCHOOL</span></header>
+<div id="gamebox">
+<canvas id="game" width="960" height="600"></canvas>
+<div id="overlay"><div class="panel"><h1>test</h1><p>夜の高校。校内放送が止まったあと、廊下の構造が変わり始めた。<br>校内に散らばった <b>3つの記録片</b> を集め、昇降口から脱出しよう。<br>何かが暗闇を歩き回っている。</p><p>PC：WASD / 矢印キー　スマホ：画面のパッド<br>走る：SHIFT　調べる：E / ACTION</p><button id="start">ゲーム開始</button></div></div>
+<div id="mobile">
+ <div class="pad">
+  <button class="up" data-key="ArrowUp">▲</button><button class="left" data-key="ArrowLeft">◀</button><button class="down" data-key="ArrowDown">▼</button><button class="right" data-key="ArrowRight">▶</button>
+ </div>
+ <div class="action"><button id="act">調べる</button></div>
+</div>
+</div>
+<div id="hud"><span id="objective">記録片 0 / 3</span><span id="status">探索中</span><span id="stamina">体力 ■■■</span></div>
+<div id="hint">WASD / 矢印キーで移動　SHIFTで走る　Eで調べる</div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=960,H=600,T=48;
+const map=[
+"####################",
+"#....#.............#",
+"#....#..####..###..#",
+"#....#..#..#..#.....#",
+"#.......#..#..#..##.#",
+"###.#####..#..#..#..#",
+"#...#......#.....#..#",
+"#...#.######.#####..#",
+"#......#...........##",
+"#.####.#.#######.#..#",
+"#....#.#.....#...#..#",
+"###..#.#####.#.###..#",
+"#....#.......#......#",
+"#.##########.#####..#",
+"#..................E#",
+"####################"
+];
+const rows=map.length,cols=map[0].length;
+let player,enemy,shards,keys,gameState='menu',last=0,noise=0,stamina=100,nearExit=false;
+const keysDown={};
+function reset(){
+ player={x:2.5*T,y:2.5*T,r:11,speed:150,face:0};
+ enemy={x:17.2*T,y:12.5*T,r:15,speed:72,alert:0,phase:0};
+ shards=[{x:8.5*T,y:3.5*T,got:false},{x:15.5*T,y:8.5*T,got:false},{x:4.5*T,y:12.5*T,got:false}];
+ stamina=100;noise=0;gameState='play';document.getElementById('overlay').style.display='none';updateHud();
+}
+function wall(x,y){let c=Math.floor(x/T),r=Math.floor(y/T);return r<0||c<0||r>=rows||c>=cols||map[r][c]==='#'}
+function move(obj,dx,dy){let nx=obj.x+dx,ny=obj.y+dy;if(!wall(nx+Math.sign(dx)*obj.r, obj.y)&&!wall(nx,obj.y+obj.r*.6)&&!wall(nx,obj.y-obj.r*.6))obj.x=nx;if(!wall(obj.x,ny+Math.sign(dy)*obj.r)&&!wall(obj.x+obj.r*.6,ny)&&!wall(obj.x-obj.r*.6,ny))obj.y=ny}
+function update(dt){
+ if(gameState!=='play')return;
+ let dx=0,dy=0;
+ if(keysDown.ArrowLeft||keysDown.a)dx--;if(keysDown.ArrowRight||keysDown.d)dx++;
+ if(keysDown.ArrowUp||keysDown.w)dy--;if(keysDown.ArrowDown||keysDown.s)dy++;
+ let len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;
+ let running=(keysDown.Shift&&stamina>1);
+ let sp=player.speed*(running?1.55:1);
+ if(running&&len>0){stamina=Math.max(0,stamina-27*dt);noise=Math.min(1,noise+dt*1.4)}else{stamina=Math.min(100,stamina+17*dt);noise=Math.max(0,noise-dt*.7)}
+ if(dx||dy){player.face=Math.atan2(dy,dx);move(player,dx*sp*dt,dy*sp*dt)}
+ const dist=Math.hypot(enemy.x-player.x,enemy.y-player.y);
+ enemy.alert=Math.max(enemy.alert,noise*1.1,dist<220?1-dist/220:0);
+ if(enemy.alert>.05){
+   let vx=player.x-enemy.x,vy=player.y-enemy.y,l=Math.hypot(vx,vy)||1;
+   move(enemy,vx/l*enemy.speed*(.75+enemy.alert*.7)*dt,vy/l*enemy.speed*(.75+enemy.alert*.7)*dt);
+ }else{
+   enemy.phase+=dt;let tx=17.2*T+Math.cos(enemy.phase*.35)*70,ty=12.5*T+Math.sin(enemy.phase*.5)*65;
+   let vx=tx-enemy.x,vy=ty-enemy.y,l=Math.hypot(vx,vy)||1;move(enemy,vx/l*35*dt,vy/l*35*dt);
+ }
+ if(dist<player.r+enemy.r+4){gameState='caught';showEnd('見つかった','廊下の奥から、足音が近づいてくる。もう一度、校内を探索する？')}
+ shards.forEach(s=>{if(!s.got&&Math.hypot(s.x-player.x,s.y-player.y)<27){s.got=true;updateHud();}});
+ nearExit=Math.hypot(player.x-(18.5*T),player.y-(14.5*T))<60;
+ if(nearExit&&shards.every(s=>s.got)){gameState='clear';showEnd('脱出成功','3つの記録片を集め、昇降口から外へ出た。');}
+ updateHud();
+}
+function updateHud(){let n=shards.filter(s=>s.got).length;document.getElementById('objective').textContent=`記録片 ${n} / 3`;document.getElementById('stamina').textContent='体力 '+('■'.repeat(Math.ceil(stamina/34))||'□');document.getElementById('status').textContent=nearExit?(n===3?'出口に到着':'出口：記録片が必要'):'探索中'}
+function draw(){
+ ctx.fillStyle='#111923';ctx.fillRect(0,0,W,H);
+ let camX=Math.max(0,Math.min(cols*T-W,player.x-W/2)),camY=Math.max(0,Math.min(rows*T-H,player.y-H/2));
+ ctx.save();ctx.translate(-camX,-camY);
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){let x=c*T,y=r*T;
+  if(map[r][c]==='#'){ctx.fillStyle='#26323b';ctx.fillRect(x,y,T,T);ctx.fillStyle='#34414a';ctx.fillRect(x+2,y+2,T-4,5);ctx.fillStyle='#1a242c';ctx.fillRect(x+3,y+9,T-6,T-12)}
+  else{ctx.fillStyle=(r+c)%2?'#59605a':'#62685f';ctx.fillRect(x,y,T,T);ctx.strokeStyle='#72776d';ctx.lineWidth=1;ctx.strokeRect(x,y,T,T);if((r*7+c*3)%13===0){ctx.fillStyle='#50574f';ctx.fillRect(x+8,y+8,25,2)}}
+ }
+ // classroom doors and lockers, atmospheric school details
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(map[r][c]==='.'&&(r*3+c)%7===0){ctx.fillStyle='#38464b';ctx.fillRect(c*T+5,r*T+8,7,30);ctx.fillStyle='#9b9a7b';ctx.fillRect(c*T+7,r*T+13,2,2)}
+ shards.forEach(s=>{if(!s.got){ctx.save();ctx.translate(s.x,s.y);ctx.rotate(performance.now()/500);ctx.fillStyle='#b9d8d2';ctx.shadowColor='#9be8dc';ctx.shadowBlur=18;ctx.fillRect(-8,-8,16,16);ctx.restore()}});
+ // exit
+ ctx.fillStyle='#192e32';ctx.fillRect(18*T+7,14*T+4,30,40);ctx.fillStyle='#79b9a5';ctx.fillRect(18*T+12,14*T+8,20,30);ctx.fillStyle='#e0e8d8';ctx.font='10px sans-serif';ctx.fillText('EXIT',18*T+13,14*T+22);
+ // enemy
+ ctx.save();ctx.translate(enemy.x,enemy.y);ctx.fillStyle='#090b10';ctx.shadowColor='#05060a';ctx.shadowBlur=16;ctx.beginPath();ctx.ellipse(0,0,13,20,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8a9b9d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,-12);ctx.lineTo(-17,-25);ctx.moveTo(5,-12);ctx.lineTo(17,-24);ctx.moveTo(-5,12);ctx.lineTo(-14,27);ctx.moveTo(5,12);ctx.lineTo(16,26);ctx.stroke();ctx.fillStyle='#d2e0d8';ctx.fillRect(-5,-5,3,2);ctx.fillRect(3,-5,3,2);ctx.restore();
+ // player
+ ctx.save();ctx.translate(player.x,player.y);ctx.fillStyle='#d5dedb';ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#263c48';ctx.beginPath();ctx.arc(Math.cos(player.face)*5,Math.sin(player.face)*5,4,0,Math.PI*2);ctx.fill();ctx.restore();
+ // darkness with flashlight
+ ctx.restore();
+ ctx.save();ctx.fillStyle='rgba(2,5,10,.86)';ctx.fillRect(0,0,W,H);
+ let px=player.x-camX,py=player.y-camY;
+ ctx.globalCompositeOperation='destination-out';
+ let g=ctx.createRadialGradient(px,py,35,px,py,235);g.addColorStop(0,'rgba(0,0,0,.98)');g.addColorStop(.65,'rgba(0,0,0,.7)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,235,0,Math.PI*2);ctx.fill();
+ ctx.globalCompositeOperation='source-over';
+ // vignette
+ let vg=ctx.createRadialGradient(W/2,H/2,100,W/2,H/2,560);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+ ctx.restore();
+ // static noise
+ if(enemy.alert>.35){ctx.fillStyle=`rgba(190,220,220,${enemy.alert*.04})`;for(let i=0;i<35;i++){let x=Math.random()*W,y=Math.random()*H;ctx.fillRect(x,y,Math.random()*35+2,1)}}
+}
+function showEnd(title,msg){let ov=document.getElementById('overlay');ov.style.display='flex';ov.innerHTML=`<div class="panel"><h1 style="letter-spacing:.12em">${title}</h1><p>${msg}</p><button id="again">もう一度</button></div>`;document.getElementById('again').onclick=reset}
+function loop(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
+document.getElementById('start').onclick=reset;
+document.getElementById('act').onclick=()=>{if(gameState==='play'){if(nearExit&&shards.every(s=>s.got)){gameState='clear';showEnd('脱出成功','校舎から脱出した。')}}};
+window.addEventListener('keydown',e=>{keysDown[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key.toLowerCase()==='e'&&nearExit&&shards.every(s=>s.got)){gameState='clear';showEnd('脱出成功','校舎から脱出した。')}});
+window.addEventListener('keyup',e=>keysDown[e.key]=false);
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keysDown[k]=true;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keysDown[k]=false))});
+reset();gameState='menu';document.getElementById('overlay').style.display='flex';requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
